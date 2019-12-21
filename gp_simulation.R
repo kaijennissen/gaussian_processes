@@ -2,48 +2,199 @@ library(tidyverse)
 library(ggplot2)
 source("./kernels.R")
 
-# gp simulation ----------------------------------------------------
+
+
+# gp simulation from squared exponential kernel ---------------------------
+sim_function <- function(x){
+    return(x*3)
+}
+
 x.star <- seq(-20, 20, len = 800)
 xx <- seq(from = -5 * pi,
 		  to = 5 * pi,
 		  by = .5)
-yy <- sin(xx)
+yy <- sim_function(xx)
 ff <- data.frame(x = xx,
 				 y = yy)
 
-x <- sample(xx, size = 8, replace = FALSE)
-y <- sin(x)
+x <- sample(xx, size = 10, replace = FALSE)
+y <- sim_function(x)
 f <- data.frame(x = x,
 				y = y)
 
 fig1 <-
-	fit_plot_kernel(
+	fit_color_plot(
 		df = f,
 		x.star = x.star,
-		n_sample = 200,
-		kernel = rational_quadratic_kernel,
-		l = 2.5,
-		sig = .5
+		n_sample = 25,
+		kernel = squared_exponential_kernel,
+		l=2,
+		sig=1
 	)
-fig1
-# +
-# 	geom_line(
-# 		data = x_star,
-# 		aes(x = x_star, y = f_star),
-# 		colour = "#C62F4B",
-# 		size = .5
-# 	) +
-# 	geom_point(data = f, aes(x = x, y = y),color="#C62F4B" ) +
-# 	geom_point(data = ff,
-# 			   aes(x = xx, y = yy),
-# 			   color = "red",
-# 			   size = .2)
+fig1+
+	geom_point(data = f, aes(x = x, y = y),color="#C62F4B" ) +
+	geom_point(data = ff,
+			   aes(x = xx, y = yy),
+			   color = "red",
+			   fill="red",
+			   size = .2)
 
 
+fig2 <-
+    fit_color_plot(
+        df = f,
+        x.star = x.star,
+        n_sample = 25,
+        kernel = squared_exponential_kernel,
+        l=2,
+        sig=1
+    )
+fig2+
+    geom_point(data = f, aes(x = x, y = y),color="#C62F4B" ) +
+    geom_point(data = ff,
+               aes(x = xx, y = yy),
+               color = "red",
+               fill="red",
+               size = .2)
 
 
+fig3 <-
+    fit_color_plot(
+        df = f,
+        x.star = x.star,
+        n_sample = 25,
+        kernel = squared_exponential_kernel,
+        l=3,
+        sig=1
+    )
+fig3+
+    geom_point(data = f, aes(x = x, y = y),color="#C62F4B" ) +
+    geom_point(data = ff,
+               aes(x = xx, y = yy),
+               color = "red",
+               fill="red",
+               size = .2)
 
 
+fig4 <-
+    fit_color_plot(
+        df = f,
+        x.star = x.star,
+        n_sample = 25,
+        kernel = squared_exponential_kernel,
+        l=5,
+        sig=1
+    )
+fig4+
+    geom_point(data = f, aes(x = x, y = y),color="#C62F4B" ) +
+    geom_point(data = ff,
+               aes(x = xx, y = yy),
+               color = "red",
+               fill="red",
+               size = .2)
+
+
+fig5 <-
+    fit_color_plot(
+        df = f,
+        x.star = x.star,
+        n_sample = 25,
+        kernel = squared_exponential_kernel,
+        l=1,
+        sig=2
+    )
+fig5+
+    geom_point(data = f, aes(x = x, y = y),color="#C62F4B" ) +
+    geom_point(data = ff,
+               aes(x = xx, y = yy),
+               color = "red",
+               fill="red",
+               size = .2)
+
+fig6 <-
+    fit_color_plot(
+        df = f,
+        x.star = x.star,
+        n_sample = 25,
+        kernel = squared_exponential_kernel,
+        l=1,
+        sig=4
+    )
+fig6+
+    geom_point(data = f, aes(x = x, y = y),color="#C62F4B" ) +
+    geom_point(data = ff,
+               aes(x = xx, y = yy),
+               color = "red",
+               fill="red",
+               size = .2)
+
+fig7 <-
+    fit_color_plot(
+        df = f,
+        x.star = x.star,
+        n_sample = 25,
+        kernel = squared_exponential_kernel,
+        l=3,
+        sig=4
+    )
+fig7+
+    geom_point(data = f, aes(x = x, y = y),color="#C62F4B" ) +
+    geom_point(data = ff,
+               aes(x = xx, y = yy),
+               color = "red",
+               fill="red",
+               size = .2)
+
+
+# gp simulation from squared exponential kernel ---------------------------
+sim_function <- function(x){
+    return(sin(x))
+}
+
+x.star <- seq(-20, 20, len = 800)
+xx <- seq(from = -5 * pi,
+          to = 5 * pi,
+          by = .5)
+yy <- sim_function(xx)
+ff <- data.frame(x = xx,
+                 y = yy)
+
+x <- sample(xx, size = 10, replace = FALSE)
+y <- sim_function(x)
+f <- data.frame(x = x,
+                y = y)
+
+fig8 <-
+    fit_color_plot(
+        df = f,
+        x.star = x.star,
+        n_sample = 25,
+        kernel = squared_exponential_kernel,
+    )
+fig8+
+    geom_point(data = f, aes(x = x, y = y),color="#C62F4B" ) +
+    geom_point(data = ff,
+               aes(x = xx, y = yy),
+               color = "red",
+               fill="red",
+               size = .2)
+
+
+fig9 <-
+    fit_color_plot(
+        df = f,
+        x.star = x.star,
+        n_sample = 25,
+        kernel = periodic_kernel,
+        sig=.5
+    )
+fig9+
+    geom_point(data = f, aes(x = x, y = y),color="#C62F4B" ) +
+    geom_point(data = ff,
+               aes(x = xx, y = yy),
+               color = "red",
+               fill="red",
+               size = .2)
 
 
 

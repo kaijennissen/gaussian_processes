@@ -13,6 +13,43 @@ library(ggplot2)
 # SS[upper.tri(SS)] <- t(SS)[upper.tri(SS)]
 # isSymmetric(SS)
 
+# Linear Kernel -----------------------------------------------------------
+linear_kernel <- function(X1,
+                          X2,
+                          c = 1,
+                          sig_b = 1,
+                          sig_v = 1) {
+    # Linear-Kernel
+    #
+    #T he linear kernel is not like the others in that it's non-stationary.
+    # A stationary covariance function is one that only depends on the relative
+    # position of its two inputs, and not on their absolute location.
+    # That means that the parameters of the linear kernel are about specifying the origin:
+    # The offset c
+    # 		determines the x-coordinate of the point that all the lines in the
+    # 		posterior go though. At this point, the function will have zero
+    #		variance (unless you add noise)
+    # The constant variance sig_b^2
+    # 		determines how far from 0 the height of the function will be at zero.
+    # 		It's a little confusing, becuase it's not specifying that value directly,
+    # 		but rather putting a prior on it. It's equivalent to adding an
+    # 		uncertain offset to our model.
+    #
+    # Parameters:
+    # 	X1, X2 = vectors
+    # 	l = the scale length parameter
+    # Returns:
+    # 	a covariance matrix
+    Sigma <-
+        matrix(rep(0, length(X1) * length(X2)), nrow = length(X1))
+    for (i in 1:nrow(Sigma)) {
+        for (j in 1:ncol(Sigma)) {
+            Sigma[i, j] <- sig_b ** 2 + sig_v ** 2 * (X1[i] - c) * (X2[j] - c)
+        }
+    }
+    return(Sigma)
+}
+
 
 # Squared Exponential Kernel ----------------------------------------------
 squared_exponential_kernel <- function(X1, X2, l = 1, sig = 1) {
@@ -117,6 +154,22 @@ periodic_kernel <- function(X1,
 	return(Sigma)
 }
 
+periodic_kernel<- function(x, sig=1, l=1, p=pi){
+    y <- sig ** 2 * exp(-2 * (sin (pi * abs(x)/ p)/l)**2)
+}
+
+
+
+tibble(x=seq(-3*pi,3*pi,pi/64)) %>% 
+    mutate('.5'=periodic_kernel(x, l=.5,sig=1,p=pi),
+           '1'=periodic_kernel(x, l=1,sig=1,p=pi),
+           '2'=periodic_kernel(x, l=2,sig=1,p=pi),
+           '4'=periodic_kernel(x, l=4,sig=1,p=pi)) %>% 
+    gather(key="l", value="y", -x) %>% 
+    ggplot(aes(x=x, y=y, col=l))+
+    geom_line()
+
+
 
 # Locally Periodic Kernel -------------------------------------------------
 locally_periodoc_kernel <- function(X1,
@@ -155,42 +208,6 @@ locally_periodoc_kernel <- function(X1,
 }
 
 
-# Linear Kernel -----------------------------------------------------------
-linear_kernel <- function(X1,
-						  X2,
-						  c = 1,
-						  sig_b = 1,
-						  sig_v = 1) {
-	# Linear-Kernel
-	#
-	#T he linear kernel is not like the others in that it's non-stationary.
-	# A stationary covariance function is one that only depends on the relative
-	# position of its two inputs, and not on their absolute location.
-	# That means that the parameters of the linear kernel are about specifying the origin:
-	# The offset c
-	# 		determines the x-coordinate of the point that all the lines in the
-	# 		posterior go though. At this point, the function will have zero
-	#		variance (unless you add noise)
-	# The constant variance sig_b^2
-	# 		determines how far from 0 the height of the function will be at zero.
-	# 		It's a little confusing, becuase it's not specifying that value directly,
-	# 		but rather putting a prior on it. It's equivalent to adding an
-	# 		uncertain offset to our model.
-	#
-	# Parameters:
-	# 	X1, X2 = vectors
-	# 	l = the scale length parameter
-	# Returns:
-	# 	a covariance matrix
-	Sigma <-
-		matrix(rep(0, length(X1) * length(X2)), nrow = length(X1))
-	for (i in 1:nrow(Sigma)) {
-		for (j in 1:ncol(Sigma)) {
-			Sigma[i, j] <- sig_b ** 2 + sig_v ** 2 * (X1[i] - c) * (X2[j] - c)
-		}
-	}
-	return(Sigma)
-}
 
 
 # kernel plots ------------------------------------------------------------
