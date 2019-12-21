@@ -194,8 +194,7 @@ linear_kernel <- function(X1,
 
 
 # kernel plots ------------------------------------------------------------
-
-fit_plot_kernel <- function(df, x.star, n_samples = 5, kernel, ...) {
+fit_plot <- function(df, x.star, n_samples = 5, kernel, ...) {
 	sigma <- kernel(x.star, x.star, ...)
 	
 	x <- df$x
@@ -214,201 +213,77 @@ fit_plot_kernel <- function(df, x.star, n_samples = 5, kernel, ...) {
 		values[, i] <- MASS::mvrnorm(1, f.star.bar, cov.f.star)
 	}
 	
-	# values <- cbind(x = x.star,
-	# 				#as.data.frame(values),
-	# 				ymax=apply(values, MARGIN=1, FUN=max, na.rm=TRUE),
-	# 				ymin=apply(values, MARGIN=1, FUN=min, na.rm=TRUE)) %>% as.data.frame()
-	# values$abs_max <- abs(values$ymax-f.star.bar)
-	# values$abs_min <- abs(values$ymin-f.star.bar)
-	# values$y_bar <- f.star.bar
-	# 
-	# ggplot(values,aes(x = x)) +
-	# 	geom_ribbon(aes(ymax=ymax,ymin=ymin), alpha=.25, col="#013848")+
-	# 	geom_line(aes(y = y_bar), col="red")+
-	# 	geom_point(data = f, aes(x = x, y = y))
-		#geom_line(aes(x=x,y=ymax))+
-		# geom_line(aes(x=x,y=ymin))+
-
 	values <- cbind(x = x.star,
 					as.data.frame(values))
 	values <- reshape2::melt(values, id = "x")
-	values$col <- abs(values$value -rep(f.star.bar,n_samples))
-	#values$col <- (values$col-mean(values$col))/sd(values$col)
-	
+
 	x_star <-
 		tidyr::tibble(x_star = x.star, f_star = f.star.bar[, , drop = TRUE])
 	 fig1 <- 
 		ggplot(values, aes(x = x, y = value)) +
 		geom_line(aes(group = variable, col=col,alpha=col))+
 		scale_color_viridis_c(option = "viridis")+
-		#scale_color_gradient(low="#09557f", high="#00a378")+
-		scale_alpha_continuous(range=c(.5,.2))+
 		geom_line(
 			data = x_star,
 			aes(x = x_star, y = f_star),
-			colour = "#C62F4B", 
+			colour = "#C62F4B",
 			size = .5
 		) +
 		geom_point(data = f, aes(x = x, y = y),color="#C62F4B" ) +
-		theme_minimal() +
-		scale_y_continuous(lim = c(1.5 * min(f.star.bar), 1.5 * max(f.star.bar)), name = "output, f(x)") +
-		xlab("input, x")
+		theme_void() +
+		theme(legend.position="none")+
+		scale_y_continuous(lim = c(1.75 * min(f.star.bar), 1.75 * max(f.star.bar)), name = "output, f(x)")+
+	 xlab("input, x")
 	return(fig1)
 }
 
 
-# examples ----------------------------------------------------------------
+# colored plots -----------------------------------------------------------
+fit_color_plot <- function(df, x.star, n_samples = 5, kernel, ...) {
+	sigma <- kernel(x.star, x.star, ...)
+	
+	x <- df$x
+	k.xx <- kernel(x, x, ...)
+	k.xxs <- kernel(x, x.star, ...)
+	k.xsx <- kernel(x.star, x, ...)
+	k.xsxs <- kernel(x.star, x.star, ...)
+	
+	f.star.bar <- k.xsx %*% solve(k.xx) %*% df$y
+	cov.f.star <- k.xsxs - k.xsx %*% solve(k.xx) %*% k.xxs
+	
+	n.samples <- n_samples
+	values <-
+		matrix(rep(0, length(x.star) * n.samples), ncol = n.samples)
+	for (i in 1:n.samples) {
+		values[, i] <- MASS::mvrnorm(1, f.star.bar, cov.f.star)
+	}
 
-# f <- data.frame(x = c(-5, -3, -2, -1, -0.5, 3),
-# 				y = c(-2, 0,-1,.5, 2, -1))
+	
+	values_abs <- apply(values, MARGIN=2, FUN=function(x,y){abs(x-y)}, y=f.star.bar)
+	values_col_max <- apply(values_abs, MARGIN=1, FUN=max)
+	values_col_min <- apply(values_abs, MARGIN=1, FUN=min)
+	values_col_range <- values_col_max-values_col_min
+	values_col <- (values_abs-matrix(rep(values_col_min, n_samples),ncol=n_samples ))/matrix(rep(values_col_range, n_samples), ncol=n_samples)
+	
+	values <- cbind(x = x.star,
+					as.data.frame(values))
+	values_col <- cbind(x = x.star,
+						as.data.frame(values_col))
+	values <- reshape2::melt(values, id = "x")
+	values_col <- reshape2::melt(values_col, id = "x")
+	
+	values$col <- values_col$value
+	
+	x_star <-
+		tidyr::tibble(x_star = x.star, f_star = f.star.bar[, , drop = TRUE])
+	fig1 <- 
+		ggplot(values, aes(x = x, y = value)) +
+		geom_line(aes(group = variable, col=col,alpha=col))+
+		scale_color_viridis_c(option = "viridis")+
+		theme_void() +
+		theme(legend.position="none")+
+		scale_y_continuous(lim = c(1.75 * min(f.star.bar), 1.75 * max(f.star.bar)), name = "output, f(x)")
 
-x.star <- seq(-20, 20, len = 200)
-xx <- seq(from = -5 * pi,
-		  to = 5 * pi,
-		  by = .5)
-yy <- sin(xx)
-ff <- data.frame(x = xx,
-				 y = yy)
+	return(fig1)
+}
 
-x <- sample(xx, size = 15, replace = FALSE)
-y <- sin(x)
-f <- data.frame(x = x,
-				y = y)
-
-fig1 <-
-	fit_plot_kernel(
-		df = f,
-		x.star = x.star,
-		n_sample = 100,
-		kernel = rational_quadratic_kernel,
-		l = 3,
-		sig = 1
-	)
-fig1 +
-	geom_point(data = ff,
-			   aes(x = xx, y = yy),
-			   color = "red",
-			   size = .2)
-
-
-
-
-
-
-
-
-
-
-# rw data ------------------------------------------------------------
-# 
-# library(tidyverse)
-# library(xts)
-# # rm(list = ls())
-# rw_log <- read_csv2("rw_log_views.csv") %>% timetk::tk_xts()
-# 
-# l1 <- 10
-# l2 <- 10
-# sig1 <- 2
-# sig2 <- 2
-# p <- 1
-# sig_white <- 0
-# 
-# TT <- nrow(rw_log)
-# xx <-
-# 	(as.numeric(index(rw_log)) - min(as.numeric(index(rw_log))))[sample(1:TT,
-# 																		size =
-# 																			20, replace = FALSE)]
-# xx <- xx - max(xx) / 2
-# yy <-
-# 	coredata(rw_log)[, , drop = TRUE][sample(1:TT, size = 20, replace = FALSE)]
-# yy <- yy - mean(yy)
-# f <- data.frame(x = xx,
-# 				y = yy)
-# 
-# x.star <- seq(min(xx) * 1.1, max(xx) * 1.1, len = 400)
-# sigma <-
-# 	locally_periodoc_kernel(
-# 		x.star,
-# 		x.star,
-# 		l1 = l,
-# 		sig1 = sig,
-# 		p = p,
-# 		l2 = l,
-# 		sig2 = sig
-# 	)
-# 
-# x <- f$x
-# k.xx <-
-# 	locally_periodoc_kernel(
-# 		x,
-# 		x,
-# 		l1 = l,
-# 		sig1 = sig,
-# 		p = p,
-# 		l2 = l,
-# 		sig2 = sig
-# 	)
-# k.xxs <-
-# 	locally_periodoc_kernel(
-# 		x,
-# 		x.star,
-# 		l1 = l,
-# 		sig1 = sig,
-# 		p = p,
-# 		l2 = l,
-# 		sig2 = sig
-# 	)
-# k.xsx <-
-# 	locally_periodoc_kernel(
-# 		x.star,
-# 		x,
-# 		l1 = l,
-# 		sig1 = sig,
-# 		p = p,
-# 		l2 = l,
-# 		sig2 = sig
-# 	)
-# k.xsxs <-
-# 	locally_periodoc_kernel(
-# 		x.star,
-# 		x.star,
-# 		l1 = l,
-# 		sig1 = sig,
-# 		p = p,
-# 		l2 = l,
-# 		sig2 = sig
-# 	)
-# 
-# 
-# K_inv <-
-# 	solve(k.xx + sig_white * diag(nrow(k.xx)), diag(nrow(k.xx)))
-# f.star.bar <-
-# 	k.xsx %*% K_inv %*% f$y
-# cov.f.star <-
-# 	k.xsxs - k.xsx %*%  K_inv %*% k.xxs
-# 
-# n.samples <- 25
-# values <-
-# 	matrix(rep(0, length(x.star) * n.samples), ncol = n.samples)
-# for (i in 1:n.samples) {
-# 	LL <- chol(cov.f.star + 0.01 * diag(nrow(cov.f.star)))
-# 	values[, i] <- MASS::mvrnorm(1, f.star.bar, cov.f.star)
-# }
-# values <- cbind(x = x.star, as.data.frame(values))
-# values %>% as_tibble()
-# values <- reshape2::melt(values, id = "x")
-# 
-# x_star <-
-# 	tibble(x_star = x.star, f_star = f.star.bar[, , drop = TRUE])
-# ggplot(values, aes(x = x, y = value)) +
-# 	geom_line(aes(group = variable), colour = "#013848", alpha = .1) +
-# 	geom_line(
-# 		data = x_star,
-# 		aes(x = x_star, y = f_star),
-# 		colour = "#013848",
-# 		size = 1
-# 	) +
-# 	geom_point(data = f, aes(x = x, y = y)) +
-# 	theme_minimal() +
-# 	scale_y_continuous(lim = c(-5, 5), name = "output, f(x)") +
-# 	xlab("input, x")
