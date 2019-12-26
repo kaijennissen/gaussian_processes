@@ -159,7 +159,7 @@ yy <- sim_function(xx)
 ff <- data.frame(x = xx,
                  y = yy)
 
-x <- sample(xx, size = 10, replace = FALSE)
+x <- sample(xx, size = 15, replace = FALSE)
 y <- sim_function(x)
 f <- data.frame(x = x,
                 y = y)
@@ -180,13 +180,28 @@ fig8+
                size = .2)
 
 
+source("./kernels.R")
+x.star <- seq(-2*pi, 2*pi, len = 800)
+xx <- seq(from = -2 * pi,
+          to = 2 * pi,
+          by = .25)
+yy <- sim_function(xx)
+ff <- data.frame(x = xx,
+                 y = yy)
+x <- sort(sample(xx, size = 15, replace = FALSE))
+y <- sim_function(x)
+f <- data.frame(x = c(-pi/2, -pi/4,0,pi/4,pi/2,3*4*pi,pi),
+                y = sim_function(c(-pi/2, -pi/4,0,pi/4,pi/2,3*4*pi,pi)))
+
 fig9 <-
     fit_color_plot(
         df = f,
         x.star = x.star,
-        n_sample = 25,
+        n_sample = 5,
         kernel = periodic_kernel,
-        sig=.5
+        l=.5,
+        sig=.25,
+        p=pi
     )
 fig9+
     geom_point(data = f, aes(x = x, y = y),color="#C62F4B" ) +
@@ -198,6 +213,43 @@ fig9+
 
 
 
+# Linkedin Plot -----------------------------------------------------------
+sim_function <- function(x){
+    return(sin(x))
+}
+
+x.star <- seq(-20, 20, len = 800)
+xx <- seq(from = -5 * pi,
+          to = 5 * pi,
+          by = .5)
+yy <- sim_function(xx)
+ff <- data.frame(x = xx,
+                 y = yy)
+
+x <- sample(xx, size = 8, replace = FALSE)
+y <- sim_function(x)
+f <- data.frame(x = x,
+                y = y)
+
+
+fig1 <-
+    fit_color_plot(
+        df = f,
+        x.star = x.star,
+        n_sample = 5,
+        kernel = locally_periodoc_kernel(),
+        l=2,
+        sig=.3,
+        sig_white=.1
+    )
+fig1#+
+    geom_point(data = f, aes(x = x, y = y),color="#C62F4B" ) +
+    geom_point(data = ff,
+               aes(x = xx, y = yy),
+               color = "red",
+               fill="red",
+               size = .2)
+ggsave(fig1, file="gp.png", dpi=320, width = 12, height = 4)
 
 # rw data ------------------------------------------------------------
 # 
