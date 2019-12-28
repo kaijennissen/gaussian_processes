@@ -2,8 +2,6 @@ library(tidyverse)
 library(ggplot2)
 source("./kernels.R")
 
-
-
 # gp simulation from squared exponential kernel ---------------------------
 sim_function <- function(x){
     return(x*3)
@@ -146,7 +144,7 @@ fig7+
                size = .2)
 
 
-# gp simulation from squared exponential kernel ---------------------------
+# gp simulation from periodic kernel ---------------------------
 sim_function <- function(x){
     return(sin(x))
 }
@@ -159,7 +157,7 @@ yy <- sim_function(xx)
 ff <- data.frame(x = xx,
                  y = yy)
 
-x <- sample(xx, size = 15, replace = FALSE)
+x <- sample(xx, size = 10, replace = FALSE)
 y <- sim_function(x)
 f <- data.frame(x = x,
                 y = y)
@@ -180,28 +178,29 @@ fig8+
                size = .2)
 
 
-source("./kernels.R")
-x.star <- seq(-2*pi, 2*pi, len = 800)
-xx <- seq(from = -2 * pi,
-          to = 2 * pi,
-          by = .25)
-yy <- sim_function(xx)
-ff <- data.frame(x = xx,
-                 y = yy)
-x <- sort(sample(xx, size = 15, replace = FALSE))
-y <- sim_function(x)
-f <- data.frame(x = c(-pi/2, -pi/4,0,pi/4,pi/2,3*4*pi,pi),
-                y = sim_function(c(-pi/2, -pi/4,0,pi/4,pi/2,3*4*pi,pi)))
+# source("./kernels.R")
+# x.star <- seq(-2*pi, 2*pi, len = 800)
+# xx <- seq(from = -2 * pi,
+#           to = 2 * pi,
+#           by = .25)
+# yy <- sim_function(xx)
+# ff <- data.frame(x = xx,
+#                  y = yy)
+# x <- sort(sample(xx, size = 15, replace = FALSE))
+# y <- sim_function(x)
+# f <- data.frame(x = c(-pi/2, -pi/4,0,pi/4,pi/2,3*4*pi,pi),
+#                 y = sim_function(c(-pi/2, -pi/4,0,pi/4,pi/2,3*4*pi,pi)))
 
 fig9 <-
     fit_color_plot(
         df = f,
         x.star = x.star,
-        n_sample = 5,
+        n_sample = 50,
         kernel = periodic_kernel,
-        l=.5,
-        sig=.25,
-        p=pi
+        l=1,
+        sig=1,
+        p=2*pi,
+        sigma_wn=0.00001
     )
 fig9+
     geom_point(data = f, aes(x = x, y = y),color="#C62F4B" ) +
@@ -212,155 +211,102 @@ fig9+
                size = .2)
 
 
-
-# Linkedin Plot -----------------------------------------------------------
-sim_function <- function(x){
-    return(sin(x))
-}
-
-x.star <- seq(-20, 20, len = 800)
-xx <- seq(from = -5 * pi,
-          to = 5 * pi,
-          by = .5)
+x.star <- seq(-2*pi, 2*pi, len = 800)
+xx <- seq(from = -2 * pi,
+          to = 2 * pi,
+          by = .25)
 yy <- sim_function(xx)
 ff <- data.frame(x = xx,
                  y = yy)
-
-x <- sample(xx, size = 8, replace = FALSE)
+x <- sort(sample(xx, size = 25, replace = FALSE))
 y <- sim_function(x)
 f <- data.frame(x = x,
                 y = y)
+n_samples <- 50
+sig_noise <- 0.5
 
+sigma <- periodic_kernel(x.star, x.star, p=pi, l=pi, sig=1)
 
-fig1 <-
-    fit_color_plot(
-        df = f,
-        x.star = x.star,
-        n_sample = 5,
-        kernel = locally_periodoc_kernel(),
-        l=2,
-        sig=.3,
-        sig_white=.1
+k.xx <- periodic_kernel(x, x,  p=pi, l=1, sig=1)
+k.xxs <- periodic_kernel(x, x.star,  p=pi, l=1, sig=1)
+k.xsx <- periodic_kernel(x.star, x,  p=pi, l=1, sig=1)
+k.xsxs <- periodic_kernel(x.star, x.star,  p=pi, l=1, sig=1)
+
+inv_sigma <- solve(k.xx+.01*diag(nrow(k.xx)), diag(nrow(k.xx)))
+f.star.bar <- k.xsx %*% inv_sigma  %*% y
+cov.f.star <- k.xsxs - k.xsx %*% inv_sigma  %*% k.xxs
+
+values <-
+    matrix(rep(0, length(x.star) * n_samples), ncol = n_samples)
+for (i in 1:n_samples) {
+    L <- chol(cov.f.star+sig_noise*diag(nrow(cov.f.star)))
+    values[, i] <- f.star.bar+L%*%rnorm(nrow(f.star.bar))  # MASS::mvrnorm(1, f.star.bar, cov.f.star)
+}
+
+values_abs <-
+    apply(
+        values,
+        MARGIN = 2,
+        FUN = function(x, y) {
+            abs(x - y)
+        },
+        y = f.star.bar
     )
-fig1#+
-    geom_point(data = f, aes(x = x, y = y),color="#C62F4B" ) +
-    geom_point(data = ff,
-               aes(x = xx, y = yy),
-               color = "red",
-               fill="red",
-               size = .2)
-ggsave(fig1, file="gp.png", dpi=320, width = 12, height = 4)
+values_col_max <- apply(values_abs, MARGIN = 1, FUN = max)
+values_col_min <- apply(values_abs, MARGIN = 1, FUN = min)
+values_col_range <- values_col_max - values_col_min
+values_col <-
+    (values_abs - matrix(rep(values_col_min, n_samples), ncol = n_samples)) /
+    matrix(rep(values_col_range, n_samples), ncol = n_samples)
 
-# rw data ------------------------------------------------------------
-# 
-# library(tidyverse)
-# library(xts)
-# # rm(list = ls())
-# rw_log <- read_csv2("rw_log_views.csv") %>% timetk::tk_xts()
-# 
-# l1 <- 10
-# l2 <- 10
-# sig1 <- 2
-# sig2 <- 2
-# p <- 1
-# sig_white <- 0
-# 
-# TT <- nrow(rw_log)
-# xx <-
-# 	(as.numeric(index(rw_log)) - min(as.numeric(index(rw_log))))[sample(1:TT,
-# 																		size =
-# 																			20, replace = FALSE)]
-# xx <- xx - max(xx) / 2
-# yy <-
-# 	coredata(rw_log)[, , drop = TRUE][sample(1:TT, size = 20, replace = FALSE)]
-# yy <- yy - mean(yy)
-# f <- data.frame(x = xx,
-# 				y = yy)
-# 
-# x.star <- seq(min(xx) * 1.1, max(xx) * 1.1, len = 400)
-# sigma <-
-# 	locally_periodoc_kernel(
-# 		x.star,
-# 		x.star,
-# 		l1 = l,
-# 		sig1 = sig,
-# 		p = p,
-# 		l2 = l,
-# 		sig2 = sig
-# 	)
-# 
-# x <- f$x
-# k.xx <-
-# 	locally_periodoc_kernel(
-# 		x,
-# 		x,
-# 		l1 = l,
-# 		sig1 = sig,
-# 		p = p,
-# 		l2 = l,
-# 		sig2 = sig
-# 	)
-# k.xxs <-
-# 	locally_periodoc_kernel(
-# 		x,
-# 		x.star,
-# 		l1 = l,
-# 		sig1 = sig,
-# 		p = p,
-# 		l2 = l,
-# 		sig2 = sig
-# 	)
-# k.xsx <-
-# 	locally_periodoc_kernel(
-# 		x.star,
-# 		x,
-# 		l1 = l,
-# 		sig1 = sig,
-# 		p = p,
-# 		l2 = l,
-# 		sig2 = sig
-# 	)
-# k.xsxs <-
-# 	locally_periodoc_kernel(
-# 		x.star,
-# 		x.star,
-# 		l1 = l,
-# 		sig1 = sig,
-# 		p = p,
-# 		l2 = l,
-# 		sig2 = sig
-# 	)
-# 
-# 
-# K_inv <-
-# 	solve(k.xx + sig_white * diag(nrow(k.xx)), diag(nrow(k.xx)))
-# f.star.bar <-
-# 	k.xsx %*% K_inv %*% f$y
-# cov.f.star <-
-# 	k.xsxs - k.xsx %*%  K_inv %*% k.xxs
-# 
-# n.samples <- 25
-# values <-
-# 	matrix(rep(0, length(x.star) * n.samples), ncol = n.samples)
-# for (i in 1:n.samples) {
-# 	LL <- chol(cov.f.star + 0.01 * diag(nrow(cov.f.star)))
-# 	values[, i] <- MASS::mvrnorm(1, f.star.bar, cov.f.star)
-# }
-# values <- cbind(x = x.star, as.data.frame(values))
-# values %>% as_tibble()
-# values <- reshape2::melt(values, id = "x")
-# 
-# x_star <-
-# 	tibble(x_star = x.star, f_star = f.star.bar[, , drop = TRUE])
-# ggplot(values, aes(x = x, y = value)) +
-# 	geom_line(aes(group = variable), colour = "#013848", alpha = .1) +
-# 	geom_line(
-# 		data = x_star,
-# 		aes(x = x_star, y = f_star),
-# 		colour = "#013848",
-# 		size = 1
-# 	) +
-# 	geom_point(data = f, aes(x = x, y = y)) +
-# 	theme_minimal() +
-# 	scale_y_continuous(lim = c(-5, 5), name = "output, f(x)") +
-# 	xlab("input, x")
+values <- cbind(x = x.star,
+                as.data.frame(values))
+values_col <- cbind(x = x.star,
+                    as.data.frame(values_col))
+values <- reshape2::melt(values, id = "x")
+values_col <- reshape2::melt(values_col, id = "x")
+
+values$col <- values_col$value
+
+x_star <-
+    tidyr::tibble(x_star = x.star, f_star = f.star.bar[, , drop = TRUE])
+fig1 <-
+    ggplot(values, aes(x = x, y = value)) +
+    geom_line(aes(
+        group = variable,
+        col = col,
+        alpha = col
+    )) +
+    scale_color_viridis_c(option = "viridis") +
+    theme_void() +
+    theme(legend.position = "none") +
+    scale_y_continuous(lim = c(1.1 * min(f.star.bar), 1.1 * max(f.star.bar)), name = "output, f(x)")
+fig1
+
+mape <- function(y_pred, y_true){
+    return(mean(abs((y_pred-y_true)/y_true)))
+}
+
+h <- 36
+y <- log(AirPassengers)
+TT <- length(X)
+y_train <- window(y, end=c(1957,12))
+y_test <- window(y, start=c(1958,1))
+
+y_pred <- auto.arima(y_train) %>% forecast(h=36)
+y_pred <- tslm(y_train~trend+season) %>% forecast(h=36)
+
+
+mape(exp(y_pred$mean), exp(y_test))
+cbind(y_pred$mean, y_test)
+
+library(forecast)
+
+
+
+
+
+
+
+
+

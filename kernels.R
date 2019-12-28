@@ -118,7 +118,7 @@ rational_quadratic_kernel <-
 periodic_kernel <- function(X1,
                             X2,
                             sig=1,
-                            p=pi,
+                            p=2*pi,
                             l=1) {
     # Periodic-Kernel
     #
@@ -289,7 +289,9 @@ fit_plot <- function(df, x.star, n_samples = 5, kernel, ...) {
 
 
 # colored plots -----------------------------------------------------------
-fit_color_plot <- function(df, x.star, n_samples = 5, kernel, ...) {
+fit_color_plot <- function(df, x.star, n_samples = 5, kernel, sigma_wn=0, ...) {
+    
+    
     sigma <- kernel(x.star, x.star, ...)
     
     x <- df$x
@@ -298,7 +300,7 @@ fit_color_plot <- function(df, x.star, n_samples = 5, kernel, ...) {
     k.xsx <- kernel(x.star, x, ...)
     k.xsxs <- kernel(x.star, x.star, ...)
     
-    inv_sigma <- solve(k.xx+.Machine$double.eps*diag(nrow(k.xx)), diag(nrow(k.xx)))
+    inv_sigma <- solve(k.xx+sigma_wn*diag(nrow(k.xx)), diag(nrow(k.xx)))
     f.star.bar <- k.xsx %*% inv_sigma  %*% df$y
     cov.f.star <- k.xsxs - k.xsx %*% inv_sigma  %*% k.xxs
     
@@ -306,7 +308,7 @@ fit_color_plot <- function(df, x.star, n_samples = 5, kernel, ...) {
     values <-
         matrix(rep(0, length(x.star) * n.samples), ncol = n.samples)
     for (i in 1:n.samples) {
-        values[, i] <- MASS::mvrnorm(1, f.star.bar, cov.f.star)
+        values[, i] <- MASS::mvrnorm(1, f.star.bar, cov.f.star+sigma_wn*diag(nrow(cov.f.star)))
     }
     
     
