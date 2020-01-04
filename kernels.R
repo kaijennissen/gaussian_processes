@@ -13,6 +13,22 @@ library(ggplot2)
 # SS[upper.tri(SS)] <- t(SS)[upper.tri(SS)]
 # isSymmetric(SS)
 
+
+# periodic_kernel <- function(x,
+#                             sig = 1,
+#                             l = 1,
+#                             p = pi) {
+#     y <- sig ** 2 * exp(-2 * (sin (pi * abs(x) / p) / l) ** 2)
+# }
+
+# linear_kernel <- function(x,
+#                             sig = 1,
+#                             l = 1,
+#                             p = pi) {
+#     y <- sig ** 2 * exp(-2 * (sin (pi * abs(x) / p) / l) ** 2)
+# }
+
+
 # Linear Kernel -----------------------------------------------------------
 linear_kernel <- function(X1,
                           X2,
@@ -154,26 +170,25 @@ periodic_kernel <- function(X1,
     return(Sigma)
 }
 # 
-# periodic_kernel <- function(x,
-#                             sig = 1,
-#                             l = 1,
-#                             p = pi) {
-#     y <- sig ** 2 * exp(-2 * (sin (pi * abs(x) / p) / l) ** 2)
-# }
-
+periodic_kernel <- function(x,
+                            sig = 1,
+                            l = 1,
+                            p = pi) {
+    y <- sig ** 2 * exp(-2 * (sin (pi * abs(x) / p) / l) ** 2)
+}
 
 # plot length
-# tibble(x = seq(-3 * pi, 3 * pi, pi / 64)) %>%
-#     mutate(
-#         '.5' = periodic_kernel(x, l = .5, sig = 1, p = pi),
-#         '1' = periodic_kernel(x, l = 1, sig = 1, p = pi),
-#         '2' = periodic_kernel(x, l = 2, sig = 1, p = pi),
-#         '4' = periodic_kernel(x, l = 4, sig = 1, p = pi)
-#     ) %>%
-#     gather(key = "l", value = "y", -x) %>%
-#     ggplot(aes(x = x, y = y, col = l)) +
-#     geom_line()+
-#     geom_vline(xintercept = c(pi, -pi))
+tibble(x = seq(-3 * pi, 3 * pi, pi / 64)) %>%
+    mutate(
+        '.5' = periodic_kernel(x, l = .5, sig = 1, p = pi),
+        '1' = periodic_kernel(x, l = 1, sig = 1, p = pi),
+        '2' = periodic_kernel(x, l = 2, sig = 1, p = pi),
+        '4' = periodic_kernel(x, l = 4, sig = 1, p = pi)
+    ) %>%
+    gather(key = "l", value = "y", -x) %>%
+    ggplot(aes(x = x, y = y, col = l)) +
+    geom_line()+
+    geom_vline(xintercept = c(pi, -pi))
 # 
 # # plot sigma
 # tibble(x = seq(-3 * pi, 3 * pi, pi / 64)) %>%
@@ -353,3 +368,12 @@ fit_color_plot <- function(df, x.star, n_samples = 5, kernel, sigma_wn=0, ...) {
     
     return(fig1)
 }
+
+
+
+write_csv2(MASS::mcycle, "mcycle.csv")
+
+
+
+
+
