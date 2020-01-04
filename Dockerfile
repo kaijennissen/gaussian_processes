@@ -1,4 +1,4 @@
-FROM python:3.7.6-buster
+FROM tensorflow/tensorflow:nightly-py3-jupyter
 
 COPY requirements.txt /tmp/
 
