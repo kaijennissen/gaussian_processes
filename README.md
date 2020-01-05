@@ -8,4 +8,4 @@
 3. Application
 
 ![Example](gp.svg)
-
+<img src="./gp.svg">
