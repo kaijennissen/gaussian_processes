@@ -2,6 +2,9 @@
 .Rhistory
 .Rapp.history
 
+# Bash Scripts
+*.sh
+
 # Notebooks
 *.ipynb_checkpoints
 
