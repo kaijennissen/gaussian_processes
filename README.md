@@ -7,5 +7,5 @@
 2. Kernels
 3. Application
 
-![Example](gp.svg)
+![Example](./gp.svg)
 <img src="./gp.svg">
