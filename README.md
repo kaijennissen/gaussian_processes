@@ -1,6 +1,6 @@
 # Gaussian Processes
 
-![Example](gp_plot.png)
+![Example](gp3.png)
 
 ## Run
 1. Clone Repo
