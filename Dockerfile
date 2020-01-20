@@ -1,4 +1,4 @@
-FROM tensorflow/tensorflow:latest-py3-jupyter
+FROM tensorflow/tensorflow:2.1.0-py3-jupyter
 
 COPY requirements.txt /tmp/
 
